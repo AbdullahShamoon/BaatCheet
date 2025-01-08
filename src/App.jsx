@@ -7,7 +7,7 @@ import Notifications from './components/Notifications'
 
 const App = () => {
 
-  const user = true
+  const user = false
 
   return (
     <>
