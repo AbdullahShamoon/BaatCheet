@@ -1,8 +1,9 @@
 import React from 'react'
+import { auth } from '../../lib/firebase'
 
 const Details = () => {
   return (
-    <div className='w-[25%]'>
+    <div className='w-[25%] h-full'>
       <div className="user flex flex-col items-center p-4 border-b border-[#546d724f] gap-1">
         <img src="/Images/profile.jpg" alt="" className='w-[4.2rem] h-[4.2rem] rounded-full' />
         <h2 className='font-bold text-lg'>Abdullah Shamoon</h2>
@@ -66,7 +67,7 @@ const Details = () => {
           </div>
         </div>
         <button className='px-3 py-2 bg-[#7f1d1dee] hover:bg-[#972323fd] m-2 rounded-sm text-xs'>Block User</button>
-        <button className='px-3 py-2 bg-blue-700 hover:bg-blue-600 m-2 rounded-sm text-xs'>Logout</button>
+        <button className='px-3 py-2 bg-blue-700 hover:bg-blue-600 m-2 rounded-sm text-xs' onClick={() => auth.signOut()}>Logout</button>
 
 
       </div>
