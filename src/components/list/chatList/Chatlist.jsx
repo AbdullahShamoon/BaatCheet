@@ -8,6 +8,7 @@ import { useChatStore } from '../../../lib/chatStore'
 const Chatlist = () => {
     const [addMode, setAddMode] = useState(false)
     const [chats, setChats] = useState([])
+    const [input, setInput] = useState("")
 
     const { currentUser } = useUserStore()
     const { changeChat } = useChatStore()
@@ -57,21 +58,23 @@ const Chatlist = () => {
 
     }
 
+    const filteredChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()))
+
     return (
         <div className='chatList overflow-auto flex flex-col'>
             <div className="search flex w-full justify-around items-center my-3">
                 <div className="serachBar flex bg-[#1b2f33ad] p-[6px] pl-2 rounded-md items-center gap-2 w-[80%]">
                     <img src="/Images/search.png" alt="" className='w-4 h-4' />
-                    <input type="text" placeholder='Search' className='bg-transparent text-xs border-none outline-none ' />
+                    <input type="text" placeholder='Search' className='bg-transparent text-xs border-none outline-none' onChange={(e) => setInput(e.target.value)} />
                 </div>
                 <img src={addMode ? "/Images/minus.png" : "/Images/add.png"} alt="" className='w-7 h-7 bg-[#1b2f33ad] rounded-md cursor-pointer p-1' onClick={() => setAddMode(!addMode)} />
             </div>
 
-            {chats.map((chat) => (
+            {filteredChats.map((chat) => (
                 <div className="item flex items-center cursor-pointer gap-3 p-3 border-b border-[#546d724f]" key={chat.chatId} onClick={() => handleSelect(chat)} style={{ backgroundColor: chat?.isSeen ? "" : "#5183fe" }}>
-                    <img src={chat.user.avatar || "/Images/profile.jpg"} alt="" className='w-8 h-8 rounded-full object-cover' />
+                    <img src={chat.user.blocked.includes(currentUser.id) ? "/Images/profile.jpg" : chat.user.avatar || "/Images/profile.jpg"} alt="" className='w-8 h-8 rounded-full object-cover' />
                     <div className="texts text-sm">
-                        <span>{chat.user.username}</span>
+                        <span>{chat.user.blocked.includes(currentUser.id) ? "User" : chat.user.username}</span>
                         <p className='text-xs'>{chat.lastMessage}</p>
                     </div>
                 </div>
