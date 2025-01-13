@@ -2,7 +2,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import React, { useState } from 'react'
 import { toast } from 'react-toastify'
 import { auth, db } from '../../lib/firebase'
-import { doc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, where } from 'firebase/firestore'
 
 const Login = () => {
 
@@ -85,6 +85,20 @@ const Login = () => {
         setLoading(true)
         const formData = new FormData(e.target)
         const { username, email, password } = Object.fromEntries(formData)
+
+        // VALIDATE INPUTS
+        if (!username || !email || !password)
+            return toast.warn("Please enter inputs!");
+        if (!avatar.file) return toast.warn("Please upload an avatar!");
+
+        // VALIDATE UNIQUE USERNAME
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", username));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return toast.warn("Select another username");
+        }
+
 
         try {
 
