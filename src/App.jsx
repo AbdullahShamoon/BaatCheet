@@ -7,10 +7,12 @@ import Notifications from './components/Notifications'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './lib/firebase'
 import { useUserStore } from './lib/userStore'
+import { useChatStore } from './lib/chatStore'
 
 const App = () => {
 
-  const {currentUser , isLoading , fetchUserInfo} = useUserStore()
+  const { currentUser, isLoading, fetchUserInfo } = useUserStore()
+  const { chatId } = useChatStore()
 
   useEffect(() => {
     const unSub = onAuthStateChanged(auth, (user) => {
@@ -22,15 +24,15 @@ const App = () => {
 
   console.log(currentUser)
 
-  if(isLoading) return <div className='w-[90vw] h-[90vh] bg-[rgba(15,15,15,0.71)] backdrop-blur-sm rounded-xl flex justify-center items-center text-3xl'>Loading...</div>
+  if (isLoading) return <div className='w-[90vw] h-[90vh] bg-[rgba(15,15,15,0.71)] backdrop-blur-sm rounded-xl flex justify-center items-center text-3xl'>Loading...</div>
 
   return (
     <>
       <div className="container w-[90vw] h-[90vh] bg-[rgba(15,15,15,0.71)] backdrop-blur-sm rounded-xl flex">
         {currentUser ? (<>
           <List />
-          <Chat />
-          <Details />
+          {chatId && <Chat />}
+          {chatId && <Details />}
         </>) : <Login />}
         <Notifications />
       </div>

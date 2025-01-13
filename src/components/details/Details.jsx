@@ -3,7 +3,7 @@ import { auth } from '../../lib/firebase'
 
 const Details = () => {
   return (
-    <div className='w-[25%] h-full'>
+    <div className='w-[25%] h-full flex flex-col'>
       <div className="user flex flex-col items-center p-4 border-b border-[#546d724f] gap-1">
         <img src="/Images/profile.jpg" alt="" className='w-[4.2rem] h-[4.2rem] rounded-full' />
         <h2 className='font-bold text-lg'>Abdullah Shamoon</h2>

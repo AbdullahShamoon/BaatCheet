@@ -1,22 +1,60 @@
 import React, { useEffect, useRef, useState } from 'react'
 import EmojiPicker from 'emoji-picker-react'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { db } from '../../lib/firebase'
+import { useChatStore } from '../../lib/chatStore'
+import { useUserStore } from '../../lib/userStore'
 
 const Chat = () => {
 
   const [open, setOpen] = useState(false)
   const [text, setText] = useState("")
+  const [chat, setChat] = useState()
+
+  const { chatId } = useChatStore()
+  const { currentUser } = useUserStore()
 
   const endRef = useRef()
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" })
-  
+
   }, [])
-  
+  useEffect(() => {
+    const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
+
+      setChat(res.data())
+    })
+
+    return () => unSub()
+  }, [chatId])
+  console.log(chat)
 
   const handleEmoji = (e) => {
     setText((prev) => prev + e.emoji)
     setOpen(false)
+  }
+
+  const handleSend = async () => {
+    if (text === "") return
+
+    try {
+
+      await updateDoc(doc(db, "chats", chatId), {
+        messages: arrayUnion({
+          senderId: currentUser.id,
+          text,
+          createdAt: new Date()
+        })
+      })
+
+      const userChatRef = doc(db, "userChats", currentUser.id)
+      await updateDoc(userChatRef, {
+        [`chats.${chatId}.lastMessage`]: text
+      })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (
@@ -38,37 +76,30 @@ const Chat = () => {
       </div>
 
       <div className="center p-3 flex-1 flex flex-col overflow-auto scrollbar-hidden gap-2">
-        <div className="message flex gap-2 max-w-[70%]">
+
+        {/* <div className="message flex gap-2 max-w-[70%]">
           <img src="/Images/profile.jpg" alt="" className='w-6 h-6 rounded-full' />
           <div className="texts flex-1 flex flex-col gap-1">
             <p className='bg-[#1b2f33ad] rounded-md p-2 text-sm'>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Obcaecati, qui?</p>
             <span className='text-xs px-1'>2:30 AM</span>
           </div>
-        </div>
-        <div className="messageOwn flex gap-2 max-w-[70%] self-end">
-          <div className="texts flex-1 flex flex-col gap-1">
-            <img src="/Images/profile.jpg" alt="" className='max-w-full h-[230px] object-cover rounded-md' />
-            <p className='text-right bg-[#2564ebbb] rounded-md p-2 text-sm'>Lorem ipsum dolor sit amet, consectetur ejkh ke fje kejf k nkefkewknf kjew kjefb </p>
-            <span className='text-xs px-1'>2:30 AM</span>
+        </div> */}
+
+        {chat?.messages?.map((message) => (
+          <div key={message?.createdAt} className="messageOwn flex gap-2 max-w-[70%] self-end">
+            <div className="texts flex-1 flex flex-col gap-1">
+              {message.img && <img src={message.img} alt="" className='max-w-full h-[230px] object-cover rounded-md' />}
+              <p className='text-right bg-[#2564ebbb] rounded-md p-2 text-sm'>{message.text}</p>
+              {/* <span className='text-xs px-1'>2:30 AM</span> */}
+            </div>
           </div>
-        </div>
-        <div className="message flex gap-2 max-w-[70%]">
-          <img src="/Images/profile.jpg" alt="" className='w-6 h-6 rounded-full' />
-          <div className="texts flex-1 flex flex-col gap-1">
-            <p className='bg-[#1b2f33ad] rounded-md p-2 text-sm'>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Obcaecati, qui?</p>
-            <span className='text-xs px-1'>2:30 AM</span>
-          </div>
-        </div>
-        <div className="messageOwn flex gap-2 max-w-[70%] self-end">
-          <div className="texts flex-1 flex flex-col gap-1">
-            <img src="/Images/profile.jpg" alt="" className='max-w-full h-[230px] object-cover rounded-md' />
-            <p className='text-right bg-[#2564ebbb] rounded-md p-2 text-sm'>Lorem ipsum dolor sit amet, consectetur ejkh ke fje kejf k nkefkewknf kjew kjefb </p>
-            <span className='text-xs px-1'>2:30 AM</span>
-          </div>
-        </div>
+        ))
+        }
+
+
         <div ref={endRef}></div>
-        
-        
+
+
       </div>
 
       <div className="bottom flex gap-3 justify-between items-center p-3 border-t border-[#546d724f]">
@@ -84,7 +115,7 @@ const Chat = () => {
             <EmojiPicker open={open} onEmojiClick={handleEmoji} />
           </div>
         </div>
-        <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer'>Send</button>
+        <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer' onClick={handleSend}>Send</button>
       </div>
     </div>
   )

@@ -3,12 +3,14 @@ import Adduser from './addUser/Adduser'
 import { db } from '../../../lib/firebase'
 import { useUserStore } from '../../../lib/userStore'
 import { doc, getDoc, onSnapshot } from 'firebase/firestore'
+import { useChatStore } from '../../../lib/chatStore'
 
 const Chatlist = () => {
     const [addMode, setAddMode] = useState(false)
     const [chats, setChats] = useState([])
 
     const { currentUser } = useUserStore()
+    const { changeChat } = useChatStore()
 
     useEffect(() => {
         const unsub = onSnapshot(doc(db, "userChats", currentUser.id), async (res) => {
@@ -35,6 +37,10 @@ const Chatlist = () => {
         }
     }, [currentUser.id])
 
+    const handleSelect = async (chat) => {
+        changeChat(chat.chatId, chat.user)
+    }
+
     return (
         <div className='chatList overflow-auto flex flex-col'>
             <div className="search flex w-full justify-around items-center my-3">
@@ -46,7 +52,7 @@ const Chatlist = () => {
             </div>
 
             {chats.map((chat) => (
-                <div className="item flex items-center cursor-pointer gap-3 p-3 border-b border-[#546d724f]" key={chat.chatId}>
+                <div className="item flex items-center cursor-pointer gap-3 p-3 border-b border-[#546d724f]" key={chat.chatId}onClick={() => handleSelect(chat)} >
                     <img src={chat.user.avatar || "/Images/profile.jpg"} alt="" className='w-8 h-8 rounded-full object-cover' />
                     <div className="texts text-sm">
                         <span>{chat.user.username}</span>
