@@ -4,6 +4,8 @@ import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firesto
 import { db } from '../../lib/firebase'
 import { useChatStore } from '../../lib/chatStore'
 import { useUserStore } from '../../lib/userStore'
+import { format } from "timeago.js";
+
 
 const Chat = () => {
 
@@ -15,7 +17,7 @@ const Chat = () => {
     url: ""
   })
 
-  const { chatId, user ,isCurrentUserBlocked, isReceiverBlocked } = useChatStore()
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore()
   const { currentUser } = useUserStore()
 
   const endRef = useRef(null)
@@ -23,7 +25,7 @@ const Chat = () => {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [chat?.messages])
-  
+
   useEffect(() => {
     const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
 
@@ -85,62 +87,63 @@ const Chat = () => {
           createdAt: new Date(),
           ...(imgUrl && { img: imgUrl })
         })
-    })
+      })
 
-    const userIds = [currentUser.id, user.id]
+      const userIds = [currentUser.id, user.id]
 
-    userIds.forEach(async (id) => {
+      userIds.forEach(async (id) => {
 
 
-      const userChatsRef = doc(db, "userChats", id)
-      const userChatsSnapshot = await getDoc(userChatsRef)
+        const userChatsRef = doc(db, "userChats", id)
+        const userChatsSnapshot = await getDoc(userChatsRef)
 
-      if (userChatsSnapshot.exists()) {
-        const userChatsData = userChatsSnapshot.data()
-        const chatIndex = userChatsData.chats.findIndex((chat) => chat.chatId === chatId)
+        if (userChatsSnapshot.exists()) {
+          const userChatsData = userChatsSnapshot.data()
+          const chatIndex = userChatsData.chats.findIndex((chat) => chat.chatId === chatId)
 
-        userChatsData.chats[chatIndex].lastMessage = text
-        userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false
-        userChatsData.chats[chatIndex].updatedAt = Date.now()
+          userChatsData.chats[chatIndex].lastMessage = text
+          userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false
+          userChatsData.chats[chatIndex].updatedAt = Date.now()
 
-        await updateDoc(userChatsRef, {
-          chats: userChatsData.chats
-        })
+          await updateDoc(userChatsRef, {
+            chats: userChatsData.chats
+          })
 
-      }
-    })
-  } catch (error) {
-    console.log(error)
+        }
+      })
+    } catch (error) {
+      console.log(error)
+    } finally {
+
+      setImg({
+        file: null,
+        url: ""
+      })
+      setText("")
+    }
   }
 
-  setImg({
-    file: null,
-    url: ""
-  })
-  setText("")
-}
+  return (
+    <div className='w-[50%] h-full border-x border-[#546d724f] flex flex-col'>
 
-return (
-  <div className='w-[50%] h-full border-x border-[#546d724f] flex flex-col'>
-
-    <div className="top flex justify-between items-center p-3 border-b border-[#546d724f]">
-      <div className="user flex items-center gap-3">
-        <img src={user?.avatar || "/Images/profile.jpg"} alt="" className='w-11 h-11 rounded-full object-cover' />
-        <div className="texts">
-          <span className='font-semibold'>{user?.username}</span>
-          <p className='text-xs text-gray-400'>Lorem ipsum dolor sit amet.</p>
+      <div className="top flex justify-between items-center p-3 border-b border-[#546d724f]">
+        <div className="user flex items-center gap-3">
+          <img src={user?.avatar || "/Images/profile.jpg"} alt="" className='w-11 h-11 rounded-full object-cover' />
+          <div className="texts">
+            <span className='font-semibold'>{user?.username}</span>
+            <p className='text-xs text-gray-400'>Lorem ipsum dolor sit amet.</p>
+          </div>
+        </div>
+        <div className="icons flex items-center justify-center gap-3">
+          <img src="/Images/call.png" alt="" className='w-4 h-4 cursor-pointer' />
+          <img src="/Images/video.png" alt="" className='w-4 h-4 invert cursor-pointer' />
+          <img src="/Images/info.png" alt="" className='w-4 h-4 cursor-pointer' />
         </div>
       </div>
-      <div className="icons flex items-center justify-center gap-3">
-        <img src="/Images/call.png" alt="" className='w-4 h-4 cursor-pointer' />
-        <img src="/Images/video.png" alt="" className='w-4 h-4 invert cursor-pointer' />
-        <img src="/Images/info.png" alt="" className='w-4 h-4 cursor-pointer' />
-      </div>
-    </div>
 
-    <div className="center p-3 flex-1 flex flex-col overflow-auto scrollbar-hidden gap-2">
+      <div className="center p-3 flex-1 flex flex-col overflow-auto scrollbar-hidden gap-2">
 
-      {/* <div className="message flex gap-2 max-w-[70%]">
+        {/* <div className="message flex gap-2 max-w-[70%]">
           <img src="/Images/profile.jpg" alt="" className='w-6 h-6 rounded-full' />
           <div className="texts flex-1 flex flex-col gap-1">
             <p className='bg-[#1b2f33ad] rounded-md p-2 text-sm'>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Obcaecati, qui?</p>
@@ -148,50 +151,51 @@ return (
           </div>
         </div> */}
 
-      {chat?.messages?.map((message) => (
-        <div key={message?.createdAt} className={message.senderId === currentUser?.id ? "messageOwn flex gap-2 max-w-[70%] self-end" : "message flex gap-2 max-w-[70%]"}>
-          <div className="texts flex-1 flex flex-col gap-1">
-            {message.img && <img src={message.img} alt="" className='max-w-full h-[230px] object-cover rounded-md' />}
-            <p className={message.senderId === currentUser?.id ? 'text-right bg-[#2564ebbb] rounded-md p-2 text-sm' : 'bg-[#1b2f33ad] rounded-md p-2 text-sm'}>{message.text}</p>
-            {/* <span className='text-xs px-1'>2:30 AM</span> */}
+        {chat?.messages?.map((message) => (
+          <div key={message?.createdAt} className={message.senderId === currentUser?.id ? "messageOwn flex gap-2 max-w-[70%] self-end" : "message flex gap-2 max-w-[70%]"}>
+            <div className="texts flex-1 flex flex-col gap-1">
+              {message.img && <img src={message.img} alt="" className='max-w-full h-[230px] object-cover rounded-md' />}
+              <p className={message.senderId === currentUser?.id ? 'text-right bg-[#2564ebbb] rounded-md p-2 text-sm' : 'bg-[#1b2f33ad] rounded-md p-2 text-sm'}>{message.text}</p>
+              {/* <span className='text-xs px-1'>2:30 AM</span> */}
+              <span className='text-[0.6rem] px-1'>{format(message.createdAt.toDate())}</span>
+            </div>
+          </div>
+        ))
+        }
+        {img.url && (
+          <div className="messageOwn flex gap-2 max-w-[70%] self-end">
+            <div className="texts flex-1 flex flex-col gap-1">
+              <img src={img.url} alt="" className='max-w-full h-[230px] object-cover rounded-md' />
+            </div>
+          </div>
+        )}
+
+
+        <div ref={endRef}></div>
+
+
+      </div>
+
+      <div className="bottom flex gap-3 justify-between items-center p-3 border-t border-[#546d724f]">
+        <div className="icons flex items-center justify-center gap-3">
+          <label htmlFor="file">
+            <img src="/Images/image.png" alt="" className='w-4 h-4 cursor-pointer' />
+          </label>
+          <input type="file" name="file" id="file" onChange={handleimg} className="hidden" />
+          <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' />
+          <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' />
+        </div>
+        <input type="text" placeholder={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send messages" : "Type a message"} className='bg-[#1b2f33ad] rounded-md p-3 text-xs border-none outline-none flex-1 disabled:cursor-not-allowed disabled:bg-[#121f22ad] ' onChange={(e) => setText(e.target.value)} value={text} disabled={isCurrentUserBlocked || isReceiverBlocked} />
+        <div className="emoji relative">
+          <img src="/Images/emoji.png" alt="" className='w-6 h-6 cursor-pointer' onClick={() => setOpen((prev) => !prev)} />
+          <div className="picker absolute bottom-10 left-0">
+            <EmojiPicker open={open} onEmojiClick={handleEmoji} />
           </div>
         </div>
-      ))
-      }
-      {img.url && (
-        <div className="messageOwn flex gap-2 max-w-[70%] self-end">
-          <div className="texts flex-1 flex flex-col gap-1">
-            <img src={img.url} alt="" className='max-w-full h-[230px] object-cover rounded-md' />
-          </div>
-        </div>
-      )}
-
-
-      <div ref={endRef}></div>
-
-
-    </div>
-
-    <div className="bottom flex gap-3 justify-between items-center p-3 border-t border-[#546d724f]">
-      <div className="icons flex items-center justify-center gap-3">
-        <label htmlFor="file">
-          <img src="/Images/image.png" alt="" className='w-4 h-4 cursor-pointer' />
-        </label>
-        <input type="file" name="file" id="file" onChange={handleimg} className="hidden" />
-        <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' />
-        <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' />
+        <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer disabled:bg-[#537fc5c2] disabled:cursor-not-allowed ' onClick={handleSend} disabled={isCurrentUserBlocked || isReceiverBlocked}>Send</button>
       </div>
-      <input type="text" placeholder={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send messages" :"Type a message"} className='bg-[#1b2f33ad] rounded-md p-3 text-xs border-none outline-none flex-1 disabled:cursor-not-allowed disabled:bg-[#121f22ad] ' onChange={(e) => setText(e.target.value)} value={text} disabled={isCurrentUserBlocked || isReceiverBlocked} />
-      <div className="emoji relative">
-        <img src="/Images/emoji.png" alt="" className='w-6 h-6 cursor-pointer' onClick={() => setOpen((prev) => !prev)} />
-        <div className="picker absolute bottom-10 left-0">
-          <EmojiPicker open={open} onEmojiClick={handleEmoji} />
-        </div>
-      </div>
-      <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer disabled:bg-[#537fc5c2] disabled:cursor-not-allowed ' onClick={handleSend}  disabled={isCurrentUserBlocked || isReceiverBlocked}>Send</button>
     </div>
-  </div>
-)
+  )
 }
 
 export default Chat

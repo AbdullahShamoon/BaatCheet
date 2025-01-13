@@ -6,21 +6,26 @@ import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
 
 const Details = () => {
 
-  const {currentUser} = useUserStore()
-  const {changeBlock , isReceiverBlocked , isCurrentUserBlocked , user , chatId} = useChatStore()
+  const { currentUser } = useUserStore()
+  const { changeBlock, isReceiverBlocked, isCurrentUserBlocked, user, chatId, resetChat } = useChatStore()
   const handleBlock = async () => {
     if (!user) return
 
     const userDocRef = doc(db, "users", currentUser.id)
     try {
       await updateDoc(userDocRef, {
-        blocked : isReceiverBlocked ? arrayRemove(user.id) : arrayUnion(user.id)
+        blocked: isReceiverBlocked ? arrayRemove(user.id) : arrayUnion(user.id)
       })
       changeBlock()
     } catch (error) {
       console.log(error)
     }
   }
+
+  const handleLogout = () => {
+    auth.signOut();
+    resetChat()
+  };
 
   return (
     <div className='w-[25%] h-full flex flex-col'>
@@ -77,7 +82,7 @@ const Details = () => {
               </div>
               <img src="/Images/download.png" alt="" className='w-5 h-5 bg-[#546d724f] rounded-full p-1 cursor-pointer' />
             </div>
-            
+
           </div>
         </div>
         <div className="option px-3 py-2">
@@ -89,7 +94,7 @@ const Details = () => {
         <button className='px-3 py-2 bg-[#7f1d1dee] hover:bg-[#972323fd] m-2 rounded-sm text-xs' onClick={handleBlock}>
           {isCurrentUserBlocked ? "You are Blocked!" : isReceiverBlocked ? "User Blocked" : "Block User"}
         </button>
-        <button className='px-3 py-2 bg-blue-700 hover:bg-blue-600 m-2 rounded-sm text-xs' onClick={() => auth.signOut()}>Logout</button>
+        <button className='px-3 py-2 bg-blue-700 hover:bg-blue-600 m-2 rounded-sm text-xs' onClick={handleLogout}>Logout</button>
 
 
       </div>
