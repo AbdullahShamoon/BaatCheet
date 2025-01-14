@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase'
 import { useChatStore } from '../../lib/chatStore'
 import { useUserStore } from '../../lib/userStore'
 import { format } from "timeago.js";
+import { toast } from 'react-toastify'
 
 
 const Chat = () => {
@@ -16,6 +17,8 @@ const Chat = () => {
     file: null,
     url: ""
   })
+  const [recording, setRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState("");
 
   const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore()
   const { currentUser } = useUserStore()
@@ -34,7 +37,6 @@ const Chat = () => {
 
     return () => unSub()
   }, [chatId])
-  console.log(chat)
 
   const handleEmoji = (e) => {
     setText((prev) => prev + e.emoji)
@@ -72,6 +74,157 @@ const Chat = () => {
       toast.error("Error uploading image.");
     }
   };
+
+
+
+  // const handleAudioRecord = async () => {
+  //   if (!recording) {
+  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  //     const mediaRecorder = new MediaRecorder(stream);
+  //     const audioChunks = [];
+
+  //     mediaRecorder.ondataavailable = (event) => {
+  //       audioChunks.push(event.data);
+  //     };
+
+  //     mediaRecorder.onstop = async () => {
+  //       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+  //       const formData = new FormData();
+  //       formData.append("file", audioBlob);
+  //       formData.append("upload_preset", "chugli_chowk");
+
+  //       try {
+  //         const res = await fetch("https://api.cloudinary.com/v1_1/dtwvr9cxt/video/upload", {
+  //           method: "POST",
+  //           body: formData,
+  //         });
+
+  //         const data = await res.json();
+  //         if (data.secure_url) {
+  //           setAudioUrl(data.secure_url);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error uploading audio:", error);
+  //       }
+  //     };
+
+  //     mediaRecorder.start();
+  //     setRecording(true);
+
+  //     setTimeout(() => {
+  //       mediaRecorder.stop();
+  //       setRecording(false);
+  //     }, 5000); // Record for 5 seconds
+  //   }
+
+  //   try {
+
+  //     await updateDoc(doc(db, "chats", chatId), {
+  //       messages: arrayUnion({
+  //         senderId: currentUser.id,
+  //         createdAt: new Date(),
+  //         ...(audioUrl && { audio: audioUrl }),
+  //       }),
+  //     });
+
+  //     setAudioUrl("");
+
+  //   } catch (error) {
+  //     toast.error(error.message)
+  //     console.log(error)
+  //   }
+  // };
+
+  const handleAudioRecord = async () => {
+    if (!recording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        const audioChunks = [];
+  
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+  
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const formData = new FormData();
+          formData.append("file", audioBlob);
+          formData.append("upload_preset", "chugli_chowk");
+  
+          try {
+            const res = await fetch("https://api.cloudinary.com/v1_1/dtwvr9cxt/video/upload", {
+              method: "POST",
+              body: formData,
+            });
+  
+            const data = await res.json();
+            if (data.secure_url) {
+              // Once uploaded, send the audio message to the database
+              await updateDoc(doc(db, "chats", chatId), {
+                messages: arrayUnion({
+                  senderId: currentUser.id,
+                  createdAt: new Date(),
+                  audio: data.secure_url, // Use the uploaded audio URL
+                }),
+              });
+  
+              // setAudioUrl(""); // Reset the state after sending
+            }
+          } catch (error) {
+            console.error("Error uploading audio:", error);
+          }
+        };
+  
+        mediaRecorder.start();
+        setRecording(true);
+  
+        setTimeout(() => {
+          mediaRecorder.stop();
+          setRecording(false);
+        }, 5000); // Record for 5 seconds
+      } catch (error) {
+        toast.error("Error accessing microphone");
+        console.error("Error starting audio recording:", error);
+      }
+    }
+  };
+  
+
+  const handleCameraCapture = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.play();
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    setTimeout(() => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL("image/png");
+      stream.getTracks().forEach((track) => track.stop());
+
+      const formData = new FormData();
+      formData.append("file", imageData);
+      formData.append("upload_preset", "chugli_chowk");
+
+      fetch("https://api.cloudinary.com/v1_1/dtwvr9cxt/image/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setImg({ file: null, url: data.secure_url });
+        })
+        .catch((err) => console.error("Error uploading image:", err));
+    }, 2000);
+  };
+
+
 
   const handleSend = async () => {
     if (text === "") return
@@ -155,7 +308,8 @@ const Chat = () => {
           <div key={message?.createdAt} className={message.senderId === currentUser?.id ? "messageOwn flex gap-2 max-w-[70%] self-end" : "message flex gap-2 max-w-[70%]"}>
             <div className="texts flex-1 flex flex-col gap-1">
               {message.img && <img src={message.img} alt="" className='max-w-full h-[230px] object-cover rounded-md' />}
-              <p className={message.senderId === currentUser?.id ? 'text-right bg-[#2564ebbb] rounded-md p-2 text-sm' : 'bg-[#1b2f33ad] rounded-md p-2 text-sm'}>{message.text}</p>
+              {message.audio && <audio controls src={message.audio} />}
+              { message.text && <p className={message.senderId === currentUser?.id ? 'text-right bg-[#2564ebbb] rounded-md p-2 text-sm' : 'bg-[#1b2f33ad] rounded-md p-2 text-sm'}>{message.text}</p>}
               {/* <span className='text-xs px-1'>2:30 AM</span> */}
               <span className='text-[0.6rem] px-1'>{format(message.createdAt.toDate())}</span>
             </div>
@@ -182,8 +336,8 @@ const Chat = () => {
             <img src="/Images/image.png" alt="" className='w-4 h-4 cursor-pointer' />
           </label>
           <input type="file" name="file" id="file" onChange={handleimg} className="hidden" />
-          <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' />
-          <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' />
+          <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' onClick={handleCameraCapture} />
+          <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' onClick={handleAudioRecord} />
         </div>
         <input type="text" placeholder={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send messages" : "Type a message"} className='bg-[#1b2f33ad] rounded-md p-3 text-xs border-none outline-none flex-1 disabled:cursor-not-allowed disabled:bg-[#121f22ad] ' onChange={(e) => setText(e.target.value)} value={text} disabled={isCurrentUserBlocked || isReceiverBlocked} />
         <div className="emoji relative">
