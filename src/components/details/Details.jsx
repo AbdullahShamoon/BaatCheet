@@ -91,7 +91,7 @@ const Details = () => {
             <img src="/Images/up.png" alt="" className='w-5 h-5 bg-[#546d724f] rounded-full p-[0.4rem] cursor-pointer' />
           </div>
         </div>
-        <button className='px-3 py-2 bg-[#7f1d1dee] hover:bg-[#972323fd] m-2 rounded-sm text-xs' onClick={handleBlock}>
+        <button className='px-3 py-2 bg-[#7f1d1dee] hover:bg-[#972323fd] m-2 rounded-sm text-xs' onClick={handleBlock} title={isCurrentUserBlocked ? "You are Blocked!" : isReceiverBlocked ? "Unblock" : "Block"}>
           {isCurrentUserBlocked ? "You are Blocked!" : isReceiverBlocked ? "User Blocked" : "Block User"}
         </button>
         <button className='px-3 py-2 bg-blue-700 hover:bg-blue-600 m-2 rounded-sm text-xs' onClick={handleLogout}>Logout</button>

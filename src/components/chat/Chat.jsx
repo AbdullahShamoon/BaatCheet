@@ -76,65 +76,6 @@ const Chat = () => {
   };
 
 
-
-  // const handleAudioRecord = async () => {
-  //   if (!recording) {
-  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //     const mediaRecorder = new MediaRecorder(stream);
-  //     const audioChunks = [];
-
-  //     mediaRecorder.ondataavailable = (event) => {
-  //       audioChunks.push(event.data);
-  //     };
-
-  //     mediaRecorder.onstop = async () => {
-  //       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-  //       const formData = new FormData();
-  //       formData.append("file", audioBlob);
-  //       formData.append("upload_preset", "chugli_chowk");
-
-  //       try {
-  //         const res = await fetch("https://api.cloudinary.com/v1_1/dtwvr9cxt/video/upload", {
-  //           method: "POST",
-  //           body: formData,
-  //         });
-
-  //         const data = await res.json();
-  //         if (data.secure_url) {
-  //           setAudioUrl(data.secure_url);
-  //         }
-  //       } catch (error) {
-  //         console.error("Error uploading audio:", error);
-  //       }
-  //     };
-
-  //     mediaRecorder.start();
-  //     setRecording(true);
-
-  //     setTimeout(() => {
-  //       mediaRecorder.stop();
-  //       setRecording(false);
-  //     }, 5000); // Record for 5 seconds
-  //   }
-
-  //   try {
-
-  //     await updateDoc(doc(db, "chats", chatId), {
-  //       messages: arrayUnion({
-  //         senderId: currentUser.id,
-  //         createdAt: new Date(),
-  //         ...(audioUrl && { audio: audioUrl }),
-  //       }),
-  //     });
-
-  //     setAudioUrl("");
-
-  //   } catch (error) {
-  //     toast.error(error.message)
-  //     console.log(error)
-  //   }
-  // };
-
   const handleAudioRecord = async () => {
     if (!recording) {
       try {
@@ -333,20 +274,20 @@ const Chat = () => {
       <div className="bottom flex gap-3 justify-between items-center p-3 border-t border-[#546d724f]">
         <div className="icons flex items-center justify-center gap-3">
           <label htmlFor="file">
-            <img src="/Images/image.png" alt="" className='w-4 h-4 cursor-pointer' />
+            <img src="/Images/image.png" alt="" className='w-4 h-4 cursor-pointer' title='Upload Image' />
           </label>
           <input type="file" name="file" id="file" onChange={handleimg} className="hidden" />
-          <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' onClick={handleCameraCapture} />
-          <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' onClick={handleAudioRecord} />
+          <img src="/Images/camera.png" alt="" className='w-4 h-4 cursor-pointer' title='Capture Image' onClick={handleCameraCapture} />
+          <img src="/Images/mic.png" alt="" className='w-4 h-4 cursor-pointer' title='Record Audio for 5 seconds' onClick={handleAudioRecord} />
         </div>
         <input type="text" placeholder={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send messages" : "Type a message"} className='bg-[#1b2f33ad] rounded-md p-3 text-xs border-none outline-none flex-1 disabled:cursor-not-allowed disabled:bg-[#121f22ad] ' onChange={(e) => setText(e.target.value)} value={text} disabled={isCurrentUserBlocked || isReceiverBlocked} />
         <div className="emoji relative">
-          <img src="/Images/emoji.png" alt="" className='w-6 h-6 cursor-pointer' onClick={() => setOpen((prev) => !prev)} />
+          <img src="/Images/emoji.png" alt="" className='w-6 h-6 cursor-pointer' onClick={() => setOpen((prev) => !prev)} title='Emoji Picker' />
           <div className="picker absolute bottom-10 left-0">
             <EmojiPicker open={open} onEmojiClick={handleEmoji} />
           </div>
         </div>
-        <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer disabled:bg-[#537fc5c2] disabled:cursor-not-allowed ' onClick={handleSend} disabled={isCurrentUserBlocked || isReceiverBlocked}>Send</button>
+        <button className='bg-[#3b83f6c9] text-white rounded-md px-3 py-2 text-xs cursor-pointer disabled:bg-[#537fc5c2] disabled:cursor-not-allowed ' onClick={handleSend} disabled={isCurrentUserBlocked || isReceiverBlocked} title={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send messages" : "Send Message"} >Send</button>
       </div>
     </div>
   )
